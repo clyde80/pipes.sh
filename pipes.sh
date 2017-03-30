@@ -3,15 +3,17 @@
 #
 # This modified version is maintained at:
 #
-#   https://github.com/pipeseroni/pipes.sh
+#   https://github.com/clyde80/pipes.sh
 
 VERSION=1.2.0
 
 M=32768
-p=1
+p=1     # Amount of pipes.
 f=75 s=13 r=2000 t=0
-w=80 h=24
+w=80 h=24   # Default width and height
 
+
+# Reset the width and height when the window is resized.
 resize() {
     w=$(tput cols) h=$(tput lines)
 }
@@ -36,9 +38,10 @@ v=()
 RNDSTART=0
 BOLD=1
 NOCOLOR=0
+S_COLORS=()
 
 OPTIND=1
-while getopts "p:t:f:s:r:RBChv" arg; do
+while getopts "p:t:f:c:s:r:RBChv" arg; do
 case $arg in
     p) ((p=(OPTARG>0)?OPTARG:p));;
     t)
@@ -55,6 +58,16 @@ case $arg in
     R) RNDSTART=1;;
     B) BOLD=0;;
     C) NOCOLOR=1;;
+    c)
+        if ! [[ $OPTARG =~ ^[0-7]$ ]]; then
+            echo "Invalid color. Valid colors are black(0), red(1), green(2),
+            yellow(3), blue(4), magenta(5), cyan(6), white(7)."
+            exit 1
+        else
+            S_COLORS+=($OPTARG)
+            (( ${#S_COLORS[@]} > $p )) && ((p++))
+        fi
+        ;;
     h) echo -e "Usage: $(basename $0) [OPTION]..."
         echo -e "Animated pipes terminal screensaver.\n"
         echo -e " -p [1-]\tnumber of pipes (D=1)."
@@ -66,6 +79,7 @@ case $arg in
         echo -e " -R \t\trandom starting point."
         echo -e " -B \t\tno bold effect."
         echo -e " -C \t\tno color."
+        echo -e " -c \t\tUse a specific color [0-7]."
         echo -e " -h\t\thelp (this screen)."
         echo -e " -v\t\tprint version number.\n"
         exit 0;;
@@ -88,6 +102,7 @@ cleanup() {
     tput cnorm
     stty echo
     ((NOCOLOR)) && echo -ne '\x1b[0m'
+    clear       # Clear the terminal.
     exit 0
 }
 trap resize SIGWINCH
@@ -126,7 +141,11 @@ while REPLY=; read -t 0.0$((1000/f)) -n 1 2>/dev/null; [[ -z $REPLY ]] ; do
         # Print:
         tput cup ${y[i]} ${x[i]}
         echo -ne "\x1b[${BOLD}m"
-        [[ $NOCOLOR == 0 ]] && echo -ne "\x1b[3${c[i]}m"
+        if [[ ${#S_COLORS[@]} != 0 ]]; then
+            echo -ne "\e[3${S_COLORS[i-1]}m" # Custom line color
+        elif [[ $NOCOLOR == 0 ]]; then
+            echo -ne "\e[3${c[i]}m"
+        fi
         echo -n "${sets[v[i]]:l[i]*4+n[i]:1}"
         l[i]=${n[i]}
     done

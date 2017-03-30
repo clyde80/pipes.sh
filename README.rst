@@ -65,6 +65,13 @@ Options
 
 Number of pipes (D=1).
 
+``-c [0-7]``
+------------
+
+Specify a color: black(0), red(1), green(2), yellow(3), blue(4), magenta(5)
+cyan(6), white(8). For every color specified, another pipe will be added. So,
+there is no reason to use this option with the `-p` option.
+
 ``-t [#]``
 ----------
 
@@ -181,12 +188,10 @@ No color.
 
 Help message.
 
-
 ``-v``
 ------
 
 Print version number.
-
 
 Controls
 ========
